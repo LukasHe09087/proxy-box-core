@@ -388,5 +388,5 @@ function keepalive() {
     });
   setTimeout(() => {
     keepalive();
-  }, Math.ceil(Math.random() * 15));
+  }, (Math.ceil(Math.random() * 15) * 1000 * 60) / 2);
 }
