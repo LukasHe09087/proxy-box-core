@@ -16,26 +16,57 @@ dotenv.config();
 const app = express();
 const config = (() => {
   let config_json = JSON.parse(process.env.CONFIG);
+
+  let part_warp;
+  if (config_json['warp']) {
+    part_warp = {
+      warp_secretKey: config_json['warp']['key'] || '',
+      warp_ipv6: config_json['warp']['ipv6'] || '',
+      warp_endpoint:
+        config_json['warp']['endpoint'] || 'engage.cloudflareclient.com',
+      add_ipv4: config_json['warp']['add4'] || false,
+      add_ipv6: config_json['warp']['add6'] || false,
+    };
+  }
+  let part_argo;
+  if (config_json['argo']) {
+    part_argo = {
+      argo_path:
+        config_json['argo_path'] ||
+        (os.platform() == 'win32' ? './cloudflared.exe' : './cloudflared'),
+      use_argo: config_json['argo']['use'] || false,
+      argo_protocol: config_json['argo']['protocol'] || '',
+      argo_region: config_json['argo']['region'] || '',
+      argo_access_token: config_json['argo']['token'] || '',
+    };
+  }
+  let part_tls;
+  if (config_json['tls']) {
+    part_tls = {
+      use_tls: config_json['tls']['use'] || false,
+      // please use base64 encode
+      tls_key:
+        Buffer.from(config_json['tls']['key'], 'base64').toString() || '',
+      tls_cert:
+        Buffer.from(config_json['tls']['cert'], 'base64').toString() || '',
+    };
+  }
   return {
     // core
-    core_path: config_json['core_path'] || './core',
+    core_path:
+      config_json['core_path'] ||
+      (os.platform() == 'win32' ? './core.exe' : './core'),
     port: config_json['port'] || 3000,
+    middle_port: config_json['middle_port'] || 9000,
     protocol: config_json['protocol'] || 'dmxlc3M=',
     uuid: config_json['uuid'] || guid(),
     path: config_json['path'] || '/api',
+    // tls
+    ...part_tls,
     // warp
-    warp_secretKey: config_json['warp']['key'] || '',
-    warp_ipv6: config_json['warp']['ipv6'] || '',
-    warp_endpoint:
-      config_json['warp']['endpoint'] || 'engage.cloudflareclient.com',
-    add_ipv4: config_json['warp']['add4'] || false,
-    add_ipv6: config_json['warp']['add6'] || false,
+    ...part_warp,
     // argo (cloudflared)
-    argo_path: config_json['argo_path'] || './cloudflared',
-    use_argo: config_json['argo']['use'] || false,
-    argo_protocol: config_json['argo']['protocol'] || '',
-    argo_region: config_json['argo']['region'] || '',
-    argo_access_token: config_json['argo']['token'] || '',
+    ...part_argo,
   };
 })();
 
@@ -52,7 +83,7 @@ app.get('/generate_204', (req, res) => {
 });
 
 const wsProxy = httpProxyMiddleware.createProxyMiddleware({
-  target: 'http://127.0.0.1:9000/',
+  target: `http://127.0.0.1:${config.middle_port}/`,
   changeOrigin: true,
   ws: true,
   logLevel: 'silent', // 禁用所有日志输出
@@ -65,12 +96,30 @@ app.use((req, res, next) => {
 
 // 下载核心
 function download_core() {
-  return new Promise(async resolve => {
+  return new Promise(async (resolve, reject) => {
     let url = 'https://tt.vg/DrLSV';
+    if (os.platform() == 'linux') {
+      let name = '';
+      switch (os.arch()) {
+        case 'x64':
+          name += 'amd64';
+          break;
+
+        default:
+          reject('Core: Unsupport Arch');
+          return;
+          break;
+      }
+      url = url + name;
+    } else {
+      reject('Core: Unsupport Platform');
+      return;
+    }
     try {
       const res = await (
         await fetch(url, {
           redirect: 'follow',
+          cache: 'no-store',
         })
       ).arrayBuffer();
       fs.writeFileSync(
@@ -184,7 +233,7 @@ async function start_core() {
   }
 
   let config_obj = new CoreConfigHandler.default().generateServerConfig({
-    InboundPort: 9000,
+    InboundPort: config.middle_port,
     InboundAddress: '127.0.0.1',
     sniffingEnabled: false,
     InboundProtocol: Buffer.from(config.protocol, 'base64').toString(),
@@ -240,17 +289,47 @@ async function start_core() {
 
 // 下载argo
 function download_argo() {
-  return new Promise(async resolve => {
+  return new Promise(async (resolve, reject) => {
     let url =
-      'https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64';
-    if (os.platform() == 'win32') {
-      url =
-        'https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe';
+      'https://github.com/cloudflare/cloudflared/releases/latest/download/';
+    if (os.platform() == 'linux') {
+      let name = 'cloudflared-linux-';
+      switch (os.arch()) {
+        case 'arm64':
+          name += 'arm64';
+          break;
+        case 'x64':
+          name += 'amd64';
+          break;
+
+        default:
+          reject('Cloudflared: Unsupport Arch');
+          return;
+          break;
+      }
+      url = url + name;
+    } else if (os.platform() == 'win32') {
+      let name = 'cloudflared-windows-';
+      switch (os.arch()) {
+        case 'x64':
+          name += 'amd64.exe';
+          break;
+
+        default:
+          reject('Cloudflared: Unsupport Arch');
+          return;
+          break;
+      }
+      url = url + name;
+    } else {
+      reject('Unsupport Platform');
+      return;
     }
     try {
       const res = await (
         await fetch(url, {
           redirect: 'follow',
+          cache: 'no-store',
         })
       ).arrayBuffer();
       fs.writeFileSync(
@@ -331,7 +410,21 @@ async function start_argo() {
 
 // 监听端口
 function listen_port() {
-  let serverProxy = http.createServer(app);
+  let serverProxy;
+  if (config.use_tls) {
+    console.log('[软件]', `Enabled https`);
+    if (config.tls_cert && config.tls_key) {
+      const options = {
+        key: config.tls_key,
+        cert: config.tls_cert,
+      };
+      serverProxy = https.createServer(options, app);
+    } else {
+      console.log('[软件]', `https missing: tls_cert,tls_key`);
+    }
+  } else {
+    serverProxy = http.createServer(app);
+  }
   serverProxy.listen(config.port, () => {
     console.log('[软件]', `Listening on port ${config.port}`);
   });
@@ -376,6 +469,7 @@ function keepalive() {
   // 保持唤醒
   let url_host = '';
   url_host = process.env.RENDER_EXTERNAL_HOSTNAME;
+  if (!url_host) return;
   https
     .get(`https://${url_host}/generate_204`, res => {
       if (res.statusCode == 204) {
