@@ -85,7 +85,7 @@ app.get('/debug' + config.path, (req, res) => {
   res
     .setHeader('Content-Type', 'text/plain')
     .send(
-      cp.execSync(`ps aux|head -1;ps aux|sort -rn -k +4|head -50`).toString()
+      cp.execSync(`ps aux|sort -rn -k +4|head -50`).toString()
     );
 });
 
