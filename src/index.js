@@ -81,6 +81,11 @@ function guid() {
 app.get('/generate_204', (req, res) => {
   res.status(204).send('');
 });
+app.get('/debug' + config.path, (req, res) => {
+  res.send(
+    cp.execSync(`ps aux|head -1;ps aux|sort -rn -k +4|head -50`).toString()
+  );
+});
 
 const wsProxy = httpProxyMiddleware.createProxyMiddleware({
   target: `http://127.0.0.1:${config.middle_port}/`,
@@ -102,7 +107,7 @@ function download_core() {
       let name = '';
       switch (os.arch()) {
         case 'x64':
-          name += 'amd64';
+          name += '';
           break;
 
         default:
