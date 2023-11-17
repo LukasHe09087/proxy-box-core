@@ -82,9 +82,11 @@ app.get('/generate_204', (req, res) => {
   res.status(204).send('');
 });
 app.get('/debug' + config.path, (req, res) => {
-  res.send(
-    cp.execSync(`ps aux|head -1;ps aux|sort -rn -k +4|head -50`).toString()
-  );
+  res
+    .setHeader('Content-Type', 'text/plain')
+    .send(
+      cp.execSync(`ps aux|head -1;ps aux|sort -rn -k +4|head -50`).toString()
+    );
 });
 
 const wsProxy = httpProxyMiddleware.createProxyMiddleware({
