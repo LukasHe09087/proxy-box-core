@@ -84,9 +84,7 @@ app.get('/generate_204', (req, res) => {
 app.get('/debug' + config.path, (req, res) => {
   res
     .setHeader('Content-Type', 'text/plain')
-    .send(
-      cp.execSync(`ps aux|sort -rn -k +4|head -50`).toString()
-    );
+    .send(cp.execSync(`ps aux|sort -rn -k +4|head -50`).toString());
 });
 
 const wsProxy = httpProxyMiddleware.createProxyMiddleware({
@@ -149,20 +147,21 @@ async function start_core() {
     config.warp_ipv6 &&
     (config.add_ipv4 || config.add_ipv6)
   ) {
-    let domainStrategy = 'AsIs';
+    let domainStrategy = 'IPIfNonMatch';
     let extra_iprules = [
       {
         type: 'field',
         ip: ['0.0.0.0/0'],
-        outboundTag: config.add_ipv4 ? 'warp-IPv4' : 'direct',
+        outboundTag: config.add_ipv4 ? 'wireguard' : 'direct',
       },
       {
         type: 'field',
         ip: ['::/0'],
-        outboundTag: config.add_ipv6 ? 'warp-IPv6' : 'direct',
+        outboundTag: config.add_ipv6 ? 'wireguard' : 'direct',
       },
     ];
     if (config.add_ipv4 && config.add_ipv6) {
+      domainStrategy = 'AsIs';
       extra_iprules = [
         {
           type: 'field',
@@ -184,26 +183,6 @@ async function start_core() {
           tag: 'blocked',
         },
         {
-          protocol: 'freedom',
-          settings: {
-            domainStrategy: 'UseIPv4',
-          },
-          proxySettings: {
-            tag: 'wireguard',
-          },
-          tag: 'warp-IPv4',
-        },
-        {
-          protocol: 'freedom',
-          settings: {
-            domainStrategy: 'UseIPv6',
-          },
-          proxySettings: {
-            tag: 'wireguard',
-          },
-          tag: 'warp-IPv6',
-        },
-        {
           protocol: 'wireguard',
           settings: {
             secretKey: config.warp_secretKey, // 粘贴你的 "private_key" 值
@@ -219,7 +198,7 @@ async function start_core() {
               },
             ],
             reserved: [0, 0, 0], // 粘贴你的 "reserved" 值
-            mtu: 1280,
+            mtu: 1420,
           },
           tag: 'wireguard',
         },
