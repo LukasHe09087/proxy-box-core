@@ -149,7 +149,7 @@ async function start_core() {
     config.warp_ipv6 &&
     (config.add_ipv4 || config.add_ipv6)
   ) {
-    let domainStrategy = 'IPIfNonMatch';
+    let domainStrategy = 'AsIs';
     let extra_iprules = [
       {
         type: 'field',
@@ -163,7 +163,6 @@ async function start_core() {
       },
     ];
     if (config.add_ipv4 && config.add_ipv6) {
-      domainStrategy = 'AsIs';
       extra_iprules = [
         {
           type: 'field',
