@@ -19,7 +19,7 @@ const config = (() => {
   try {
     config_json = JSON.parse(process.env.CONFIG);
   } catch {
-    config_json = JSON.parse(fs.writeFileSync('./config.json').toString());
+    config_json = JSON.parse(fs.readFileSync('./config.json').toString());
   }
   let part_warp;
   if (config_json['warp']) {
