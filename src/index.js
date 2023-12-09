@@ -15,8 +15,12 @@ let err404 = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta h
 dotenv.config();
 const app = express();
 const config = (() => {
-  let config_json = JSON.parse(process.env.CONFIG);
-
+  let config_json;
+  try {
+    config_json = JSON.parse(process.env.CONFIG);
+  } catch {
+    config_json = JSON.parse(fs.writeFileSync('./config.json').toString());
+  }
   let part_warp;
   if (config_json['warp']) {
     part_warp = {
