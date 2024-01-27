@@ -19,7 +19,11 @@ const config = (() => {
   try {
     config_json = JSON.parse(process.env.CONFIG);
   } catch {
-    config_json = JSON.parse(fs.readFileSync('./config.json').toString());
+    try {
+      config_json = JSON.parse(fs.readFileSync('./config.json').toString());
+    } catch {
+      config_json = {};
+    }
   }
   let part_warp;
   if (config_json['warp']) {
@@ -187,6 +191,7 @@ async function start_core() {
           tag: 'blocked',
         },
         {
+          // protocol: 'freedom',
           protocol: 'wireguard',
           settings: {
             secretKey: config.warp_secretKey, // 粘贴你的 "private_key" 值
@@ -197,7 +202,6 @@ async function start_core() {
             peers: [
               {
                 publicKey: 'bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=',
-                allowedIPs: ['0.0.0.0/0', '::/0'],
                 endpoint: config.warp_endpoint + ':2408',
               },
             ],
@@ -235,6 +239,7 @@ async function start_core() {
     ...extra,
   });
   config_obj = JSON.stringify(config_obj, null, '');
+  // console.log(config_obj);
 
   await (_ => {
     return new Promise(async resolve => {
