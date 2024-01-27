@@ -66,7 +66,7 @@ const config = (() => {
       config_json['core_path'] ||
       (os.platform() == 'win32' ? './core.exe' : './core'),
     port: config_json['port'] || 3000,
-    middle_port: config_json['middle_port'] || 9000,
+    middle_port: config_json['middle_port'] || 58515,
     protocol: config_json['protocol'] || 'dmxlc3M=',
     uuid: config_json['uuid'] || guid(),
     path: config_json['path'] || '/api',
