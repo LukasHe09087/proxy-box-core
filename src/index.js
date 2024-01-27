@@ -202,6 +202,7 @@ async function start_core() {
             peers: [
               {
                 publicKey: 'bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=',
+                allowedIPs: ['0.0.0.0/0', '::/0'],
                 endpoint: config.warp_endpoint + ':2408',
               },
             ],
