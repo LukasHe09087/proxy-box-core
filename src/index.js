@@ -22,6 +22,7 @@ const config = (() => {
     try {
       config_json = JSON.parse(fs.readFileSync('./config.json').toString());
     } catch {
+      console.log('[软件]', `Config Error`);
       config_json = {};
     }
   }
