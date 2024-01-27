@@ -469,7 +469,7 @@ function keepalive() {
     .get(`https://${url_host}/generate_204`, res => {
       if (res.statusCode == 204) {
       } else {
-        console.log('请求错误: ' + res.statusCode);
+        // console.log('请求错误: ' + res.statusCode);
       }
     })
     .on('error', err => {
