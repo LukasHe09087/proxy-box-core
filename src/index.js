@@ -120,13 +120,13 @@ function download_core() {
           break;
 
         default:
-          reject('Core: Unsupport Arch');
+          reject('Core: Unsupport Arch - ' + os.arch());
           return;
           break;
       }
       url = url + name;
     } else {
-      reject('Core: Unsupport Platform');
+      reject('Core: Unsupport Platform - ' + os.platform());
       return;
     }
     try {
@@ -299,7 +299,7 @@ function download_argo() {
           break;
 
         default:
-          reject('Cloudflared: Unsupport Arch');
+          reject('Cloudflared: Unsupport Arch - ' + os.arch());
           return;
           break;
       }
@@ -312,13 +312,13 @@ function download_argo() {
           break;
 
         default:
-          reject('Cloudflared: Unsupport Arch');
+          reject('Cloudflared: Unsupport Arch - ' + os.arch());
           return;
           break;
       }
       url = url + name;
     } else {
-      reject('Unsupport Platform');
+      reject('Cloudflared: Unsupport Platform - ' + os.platform());
       return;
     }
     try {
