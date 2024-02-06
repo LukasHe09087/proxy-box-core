@@ -424,7 +424,7 @@ function listen_port() {
   serverProxy.listen(config.port, () => {
     console.log('[软件]', `Listening on port ${config.port}`);
   });
-  serverProxy.on('upgrade', wsProxy.upgrade);
+  // serverProxy.on('upgrade', wsProxy.upgrade);
 }
 
 (async _ => {
