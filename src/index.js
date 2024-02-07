@@ -1,4 +1,5 @@
 const express = require('express');
+const axios = require('axios');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -130,15 +131,15 @@ function download_core() {
       return;
     }
     try {
-      const res = await (
-        await fetch(url, {
-          redirect: 'follow',
-          cache: 'no-store',
-        })
-      ).arrayBuffer();
+      const response = await axios({
+        method: 'get',
+        url: url,
+        responseType: 'arraybuffer',
+        maxRedirects: 10,
+      });
       fs.writeFileSync(
         path.resolve(process.cwd(), config.core_path),
-        Buffer.from(res)
+        response.data
       );
       resolve(true);
     } catch (err) {
@@ -322,15 +323,14 @@ function download_argo() {
       return;
     }
     try {
-      const res = await (
-        await fetch(url, {
-          redirect: 'follow',
-          cache: 'no-store',
-        })
-      ).arrayBuffer();
+      const response = await axios({
+        url: url,
+        responseType: 'arraybuffer',
+        maxRedirects: 10,
+      });
       fs.writeFileSync(
         path.resolve(process.cwd(), config.argo_path),
-        Buffer.from(res)
+        response.data
       );
       resolve(true);
     } catch (err) {
