@@ -147,7 +147,7 @@ app.get(config.path + config.web_process_path + '/update', async (req, res) => {
     try {
       const foo = await download_core();
       if (foo) {
-        res.write('\n' + 'core载成功' + '\n    ' + foo);
+        res.write('\n' + 'core下载成功' + '\n    ' + foo);
       } else {
         res.write('\n' + 'core下载失败' + '\n    ' + foo);
       }
