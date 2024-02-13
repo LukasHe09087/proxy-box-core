@@ -33,12 +33,27 @@ const config = (() => {
     part_warp = {
       ...part_warp,
       warp_secretKey: config_json['warp']['key'] || '',
+      warp_ipv4: config_json['warp']['ipv4'] || '172.16.0.2',
       warp_ipv6: config_json['warp']['ipv6'] || '',
+      warp_reserved: [0, 0, 0],
+      warp_publicKey:
+        config_json['warp']['pubkey'] ||
+        'bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=',
       warp_endpoint:
-        config_json['warp']['endpoint'] || 'engage.cloudflareclient.com',
+        config_json['warp']['endpoint'] || 'engage.cloudflareclient.com:2408',
       add_ipv4: config_json['warp']['add4'] || false,
       add_ipv6: config_json['warp']['add6'] || false,
     };
+    if (config_json['warp']['reserved']) {
+      function decodeClientId(clientId) {
+        const decodedBuffer = Buffer.from(clientId, 'base64');
+        const hexString = decodedBuffer.toString('hex');
+        const hexPairs = hexString.match(/.{1,2}/g) || [];
+        const decimalArray = hexPairs.map(hex => parseInt(hex, 16));
+        return decimalArray;
+      }
+      part_warp.warp_reserved = decodeClientId(config_json['warp']['reserved']);
+    }
   }
   let part_argo = {
     argo_path:
@@ -306,23 +321,18 @@ async function start_core() {
           tag: 'blocked',
         },
         {
-          // protocol: 'freedom',
           protocol: 'wireguard',
           settings: {
             kernelMode: false,
-            secretKey: config.warp_secretKey, // 粘贴你的 "private_key" 值
-            address: [
-              '172.16.0.2/32',
-              config.warp_ipv6 + '/128', // 粘贴你获得的 warp IPv6 地址，结尾加 /128
-            ],
+            secretKey: config.warp_secretKey,
+            address: [config.warp_ipv4 + '/32', config.warp_ipv6 + '/128'],
             peers: [
               {
-                publicKey: 'bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=',
-                allowedIPs: ['0.0.0.0/0', '::/0'],
-                endpoint: config.warp_endpoint + ':2408',
+                publicKey: config.warp_publicKey,
+                endpoint: config.warp_endpoint,
               },
             ],
-            reserved: [0, 0, 0], // 粘贴你的 "reserved" 值
+            reserved: config.warp_reserved,
             mtu: 1420,
           },
           tag: 'wireguard',
