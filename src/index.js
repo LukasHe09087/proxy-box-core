@@ -36,11 +36,8 @@ const config = (() => {
       warp_ipv4: config_json['warp']['ipv4'] || '172.16.0.2',
       warp_ipv6: config_json['warp']['ipv6'] || '',
       warp_reserved: [0, 0, 0],
-      warp_publicKey:
-        config_json['warp']['pubkey'] ||
-        'bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=',
-      warp_endpoint:
-        config_json['warp']['endpoint'] || 'engage.cloudflareclient.com:2408',
+      warp_publicKey: config_json['warp']['pubkey'] || 'bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=',
+      warp_endpoint: config_json['warp']['endpoint'] || 'engage.cloudflareclient.com:2408',
       add_ipv4: config_json['warp']['add4'] || false,
       add_ipv6: config_json['warp']['add6'] || false,
     };
@@ -56,9 +53,7 @@ const config = (() => {
     }
   }
   let part_argo = {
-    argo_path:
-      config_json['argo_path'] ||
-      (os.platform() == 'win32' ? './cloudflared.exe' : './cloudflared'),
+    argo_path: config_json['argo_path'] || (os.platform() == 'win32' ? './cloudflared.exe' : './cloudflared'),
   };
   if (config_json['argo']) {
     part_argo = {
@@ -75,20 +70,18 @@ const config = (() => {
       ...part_tls,
       use_tls: config_json['tls']['use'] || false,
       // please use base64 encode
-      tls_key:
-        Buffer.from(config_json['tls']['key'], 'base64').toString() || '',
-      tls_cert:
-        Buffer.from(config_json['tls']['cert'], 'base64').toString() || '',
+      tls_key: Buffer.from(config_json['tls']['key'], 'base64').toString() || '',
+      tls_cert: Buffer.from(config_json['tls']['cert'], 'base64').toString() || '',
     };
   }
   return {
     // core
-    core_path:
-      config_json['core_path'] ||
-      (os.platform() == 'win32' ? './core.exe' : './core'),
+    core_path: config_json['core_path'] || (os.platform() == 'win32' ? './core.exe' : './core'),
     port: config_json['port'] || 3000,
     middle_port: config_json['middle_port'] || 58515,
     protocol: config_json['protocol'] || 'dmxlc3M=',
+    // ws | httpupgrade
+    network: config_json['network'] || 'ws',
     uuid: config_json['uuid'] || guid(),
     path: config_json['path'] || '/api',
     display_web_entry: config_json['display_web_entry'] || false,
@@ -174,57 +167,54 @@ app.get(config.path + config.web_process_path + '/update', async (req, res) => {
   start(true);
   res.end('\n' + '---- Done');
 });
-app.get(
-  config.path + config.web_process_path + '/version',
-  async (req, res) => {
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.setHeader('Transfer-Encoding', 'chunked');
-    if (!config.web_process) {
-      res.end('web_process off');
-      return;
-    }
-    res.write(`Node version:`);
-    let object = process.versions;
-    for (const key in object) {
-      if (Object.hasOwnProperty.call(object, key)) {
-        const element = object[key];
-        res.write(`\n    ${key}: ${element}`);
-      }
-    }
-    res.write(`\n\nCore version:`);
-    const core_version = await (_ => {
-      return new Promise(async resolve => {
-        let args = ['--version'];
-        let processC = cp.spawn(config.core_path, args);
-        let pData = '';
-        processC.stdout.on('data', data => {
-          pData += data.toString();
-        });
-        processC.on('close', () => {
-          resolve(pData);
-        });
-      });
-    })();
-    res.write(`\n    ${core_version}`);
-    res.write(`\n\nArgo version:`);
-    const argo_version = await (_ => {
-      return new Promise(async resolve => {
-        let args = ['--version'];
-        let processC = cp.spawn(config.argo_path, args);
-        let pData = '';
-        processC.stdout.on('data', data => {
-          pData += data.toString();
-        });
-        processC.on('close', () => {
-          resolve(pData);
-        });
-      });
-    })();
-    res.write(`\n    ${argo_version}`);
-
-    res.end(null);
+app.get(config.path + config.web_process_path + '/version', async (req, res) => {
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+  res.setHeader('Transfer-Encoding', 'chunked');
+  if (!config.web_process) {
+    res.end('web_process off');
+    return;
   }
-);
+  res.write(`Node version:`);
+  let object = process.versions;
+  for (const key in object) {
+    if (Object.hasOwnProperty.call(object, key)) {
+      const element = object[key];
+      res.write(`\n    ${key}: ${element}`);
+    }
+  }
+  res.write(`\n\nCore version:`);
+  const core_version = await (_ => {
+    return new Promise(async resolve => {
+      let args = ['--version'];
+      let processC = cp.spawn(config.core_path, args);
+      let pData = '';
+      processC.stdout.on('data', data => {
+        pData += data.toString();
+      });
+      processC.on('close', () => {
+        resolve(pData);
+      });
+    });
+  })();
+  res.write(`\n    ${core_version}`);
+  res.write(`\n\nArgo version:`);
+  const argo_version = await (_ => {
+    return new Promise(async resolve => {
+      let args = ['--version'];
+      let processC = cp.spawn(config.argo_path, args);
+      let pData = '';
+      processC.stdout.on('data', data => {
+        pData += data.toString();
+      });
+      processC.on('close', () => {
+        resolve(pData);
+      });
+    });
+  })();
+  res.write(`\n    ${argo_version}`);
+
+  res.end(null);
+});
 
 const wsProxy = httpProxyMiddleware.createProxyMiddleware({
   target: `http://127.0.0.1:${config.middle_port}/`,
@@ -265,10 +255,7 @@ function download_core() {
         responseType: 'arraybuffer',
         maxRedirects: 10,
       });
-      fs.writeFileSync(
-        path.resolve(process.cwd(), config.core_path),
-        response.data
-      );
+      fs.writeFileSync(path.resolve(process.cwd(), config.core_path), response.data);
       resolve(true);
     } catch (err) {
       console.log(err);
@@ -280,11 +267,7 @@ function download_core() {
 async function start_core() {
   // 生成配置文件
   let extra = {};
-  if (
-    config.warp_secretKey &&
-    config.warp_ipv6 &&
-    (config.add_ipv4 || config.add_ipv6)
-  ) {
+  if (config.warp_secretKey && config.warp_ipv6 && (config.add_ipv4 || config.add_ipv6)) {
     let domainStrategy = 'IPIfNonMatch';
     let extra_iprules = [
       {
@@ -358,7 +341,7 @@ async function start_core() {
     sniffingEnabled: false,
     InboundProtocol: Buffer.from(config.protocol, 'base64').toString(),
     InboundUUID: config.uuid,
-    InboundStreamType: 'ws',
+    InboundStreamType: config.network,
     InboundEncryption: 'auto',
     InboundAlterId: 0,
     InboundStreamSecurity: 'none',
@@ -382,10 +365,7 @@ async function start_core() {
       });
     });
   })();
-  let processC = cp.spawn(path.resolve(process.cwd(), config.core_path), [
-    '-c',
-    'stdin:',
-  ]);
+  let processC = cp.spawn(path.resolve(process.cwd(), config.core_path), ['-c', 'stdin:']);
   let stdInStream = new stream.Readable();
   stdInStream.push(config_obj);
   stdInStream.push(null);
@@ -411,8 +391,7 @@ uuid: ${config.uuid}
 // 下载argo
 function download_argo() {
   return new Promise(async (resolve, reject) => {
-    let url =
-      'https://github.com/cloudflare/cloudflared/releases/latest/download/';
+    let url = 'https://github.com/cloudflare/cloudflared/releases/latest/download/';
     if (os.platform() == 'linux') {
       let name = 'cloudflared-linux-';
       switch (os.arch()) {
@@ -452,10 +431,7 @@ function download_argo() {
         responseType: 'arraybuffer',
         maxRedirects: 10,
       });
-      fs.writeFileSync(
-        path.resolve(process.cwd(), config.argo_path),
-        response.data
-      );
+      fs.writeFileSync(path.resolve(process.cwd(), config.argo_path), response.data);
       resolve(true);
     } catch (err) {
       console.log(err);
@@ -491,11 +467,7 @@ async function start_argo() {
   if (config.argo_region) {
     args.push('--region', config.argo_region);
   }
-  let processC = cp.spawn(path.resolve(process.cwd(), config.argo_path), [
-    'tunnel',
-    '--no-autoupdate',
-    ...args,
-  ]);
+  let processC = cp.spawn(path.resolve(process.cwd(), config.argo_path), ['tunnel', '--no-autoupdate', ...args]);
   return new Promise(resolve => {
     processC.stderr.on('data', data => {
       // https://.*[a-z]+cloudflare.com
@@ -507,16 +479,8 @@ async function start_argo() {
             .match(/(?<=Registered tunnel connection).*/)[0]
             .trim()
         );
-      } else if (
-        !config.argo_access_token &&
-        /https:\/\/.*[a-z]+cloudflare.com/.test(data)
-      ) {
-        console.log(
-          '[Argo Config]',
-          `domain: ${
-            data.toString().match(/(?<=https:\/\/).*[a-z]+cloudflare.com/)[0]
-          }`
-        );
+      } else if (!config.argo_access_token && /https:\/\/.*[a-z]+cloudflare.com/.test(data)) {
+        console.log('[Argo Config]', `domain: ${data.toString().match(/(?<=https:\/\/).*[a-z]+cloudflare.com/)[0]}`);
       } else {
         // console.log(data.toString().trim());
       }
