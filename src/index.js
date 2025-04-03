@@ -37,7 +37,7 @@ const config = (() => {
       warp_ipv6: config_json['warp']['ipv6'] || '',
       warp_reserved: [0, 0, 0],
       warp_publicKey: config_json['warp']['pubkey'] || 'bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=',
-      warp_endpoint: config_json['warp']['endpoint'] || 'engage.cloudflareclient.com:2408',
+      warp_endpoint: config_json['warp']['endpoint'] || '162.159.192.1:2408' || 'engage.cloudflareclient.com:2408',
       add_ipv4: config_json['warp']['add4'] || false,
       add_ipv6: config_json['warp']['add6'] || false,
     };
@@ -59,7 +59,9 @@ const config = (() => {
     part_argo = {
       ...part_argo,
       use_argo: config_json['argo']['use'] || false,
+      // [auto]/quic/http2
       argo_protocol: config_json['argo']['protocol'] || '',
+      // none/us
       argo_region: config_json['argo']['region'] || '',
       argo_access_token: config_json['argo']['token'] || '',
     };
@@ -80,7 +82,7 @@ const config = (() => {
     port: config_json['port'] || 3000,
     middle_port: config_json['middle_port'] || 58515,
     protocol: config_json['protocol'] || 'dmxlc3M=',
-    // ws | httpupgrade
+    // Tested: ws/xhttp
     network: config_json['network'] || 'ws',
     uuid: config_json['uuid'] || guid(),
     path: config_json['path'] || '/api',
@@ -332,6 +334,7 @@ async function start_core() {
           },
         ],
       },
+      DnsServerCustom: ['tcp+local://8.8.8.8'],
     };
   }
 
@@ -343,7 +346,6 @@ async function start_core() {
     InboundUUID: config.uuid,
     InboundStreamType: config.network,
     InboundEncryption: 'auto',
-    InboundAlterId: 0,
     InboundStreamSecurity: 'none',
     InboundPath: config.path,
     ...extra,
@@ -487,6 +489,7 @@ async function start_argo() {
       resolve([true, processC.pid]);
     });
     processC.on('error', err => {
+      console.log('[Argo Error]', err);
       resolve([false, err]);
     });
   });
