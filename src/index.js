@@ -585,14 +585,13 @@ async function start(no_listen_port = false) {
 keepalive();
 function keepalive() {
   // 保持唤醒
-  let url_host = '';
-  url_host = process.env.RENDER_EXTERNAL_HOSTNAME;
-  if (!url_host) return;
+  let keepalive_url = process.env.KEPP_ALIVE_URL;
+  if (!keepalive_url) return;
   https
-    .get(`https://${url_host}/generate_204`, res => {
+    .get(keepalive_url, res => {
       if (res.statusCode == 204) {
       } else {
-        // console.log('请求错误: ' + res.statusCode);
+        console.log('请求错误: ' + res.statusCode);
       }
     })
     .on('error', err => {
@@ -600,5 +599,5 @@ function keepalive() {
     });
   setTimeout(() => {
     keepalive();
-  }, (Math.ceil(Math.random() * 15) * 1000 * 60) / 2);
+  }, Math.ceil(Math.random() * 15) * 1000 * 60);
 }
