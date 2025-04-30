@@ -113,6 +113,9 @@ let pid_core = NaN,
 app.get('/generate_204', (req, res) => {
   res.status(204).send('');
 });
+app.get('/generate_200*any', (req, res) => {
+  res.status(200).send('');
+});
 app.get(config.path + config.web_process_path, (req, res, next) => {
   if (config.display_web_entry) {
     res.send(handlepage);
@@ -589,7 +592,7 @@ function keepalive() {
   if (!keepalive_url) return;
   https
     .get(keepalive_url, res => {
-      if (res.statusCode == 204) {
+      if (res.statusCode >= 200 && res.statusCode < 300) {
       } else {
         console.log('请求错误: ' + res.statusCode);
       }
@@ -599,5 +602,5 @@ function keepalive() {
     });
   setTimeout(() => {
     keepalive();
-  }, Math.ceil(Math.random() * 15) * 1000 * 60);
+  }, Math.ceil(Math.random() * 10 + 5) * 1000 * 60);
 }
