@@ -7,10 +7,10 @@
     "start": "node src/index.js"
   },
   "dependencies": {
-    "axios": "^1.6.8",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "http-proxy-middleware": "^3.0.0"
+    "axios": "^1.9.0",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "http-proxy-middleware": "^3.0.5"
   },
   "license": "MIT"
 }
