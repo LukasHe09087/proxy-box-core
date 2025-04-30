@@ -549,7 +549,7 @@ async function start(no_listen_port = false) {
     if (!fs.existsSync(path.resolve(process.cwd(), config.argo_path))) {
       const foo = await download_argo();
       if (foo) {
-        console.log('[初始化]', 'argo下载成功', `${foo / 1024 / 1024}MB`);
+        console.log('[初始化]', 'argo下载成功', `${Math.round((foo / 1024 / 1024) * 10) / 10} MB`);
       } else {
         console.log('[初始化]', 'argo下载失败');
       }
