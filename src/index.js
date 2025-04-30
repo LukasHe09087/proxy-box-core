@@ -113,7 +113,7 @@ let pid_core = NaN,
 app.get('/generate_204', (req, res) => {
   res.status(204).send('');
 });
-app.get('/generate_200*any', (req, res) => {
+app.get('/generate_200{*any}', (req, res) => {
   res.status(200).send('');
 });
 app.get(config.path + config.web_process_path, (req, res, next) => {
