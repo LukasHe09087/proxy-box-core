@@ -437,7 +437,7 @@ function download_argo() {
         maxRedirects: 10,
       });
       fs.writeFileSync(path.resolve(process.cwd(), config.argo_path), response.data);
-      resolve(true);
+      resolve(response.data.length);
     } catch (err) {
       console.log(err);
       resolve(false);
@@ -544,11 +544,12 @@ function listen_port() {
 })();
 start();
 async function start(no_listen_port = false) {
+  console.log('[OS Info]', `${os.platform()} ${os.arch()}`);
   if (config.use_argo) {
     if (!fs.existsSync(path.resolve(process.cwd(), config.argo_path))) {
       const foo = await download_argo();
       if (foo) {
-        console.log('[初始化]', 'argo下载成功');
+        console.log('[初始化]', 'argo下载成功', `${foo / 1024 / 1024}MB`);
       } else {
         console.log('[初始化]', 'argo下载失败');
       }
