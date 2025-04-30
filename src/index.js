@@ -603,5 +603,5 @@ function keepalive() {
     });
   setTimeout(() => {
     keepalive();
-  }, Math.ceil(Math.random() * 10 + 5) * 1000 * 60);
+  }, Math.ceil(Math.random() * 5 + 5) * 1000 * 60);
 }
